@@ -51,3 +51,59 @@ Deloitte Presents Machine Learning Challenge: Predict Loan Defaulters in associa
  * Multiple models-hyperparameter tuning
  * Methods to maximize the metric of evaluation
  * Stacking 
+ 
+ 
+ 
+ import pandas as pd
+from pptx import Presentation
+from pptx.util import Inches
+
+# Create a sample dataframe
+df = pd.DataFrame({
+    'Name': ['John Doe', 'Jane Smith', 'Bob Johnson'],
+    'Age': [30, 25, 35],
+    'Occupation': ['Engineer', 'Teacher', 'Doctor']
+})
+
+# Create a PowerPoint presentation and add a slide
+prs = Presentation()
+slide = prs.slides.add_slide(prs.slide_layouts[1])
+
+# Set the location, height, and width of the table
+left = Inches(1)
+top = Inches(2)
+height = Inches(4)
+width = Inches(6)
+
+# Add a table to the slide
+table = slide.shapes.add_table(
+    rows=df.shape[0]+1, cols=df.shape[1],
+    left=left, top=top, width=width, height=height
+)
+
+# Set the column widths based on the maximum text width for each column
+max_col_widths = [0] * df.shape[1]
+for i in range(df.shape[0]):
+    for j in range(df.shape[1]):
+        cell = table.cell(i+1, j)
+        text_width = cell.text_frame.paragraphs[0].runs[0].font.size * len(cell.text)
+        max_col_widths[j] = max(max_col_widths[j], text_width)
+for idx, width in enumerate(max_col_widths):
+    table.columns[idx].width = width
+
+# Write the column names to the table
+for i, col_name in enumerate(df.columns):
+    cell = table.cell(0, i)
+    cell.text = col_name
+    cell.text_frame.paragraphs[0].font.size = Inches(0.15)
+
+# Write the data to the table
+for i in range(df.shape[0]):
+    for j in range(df.shape[1]):
+        cell = table.cell(i+1, j)
+        cell.text = str(df.iloc[i, j])
+        cell.text_frame.paragraphs[0].font.size = Inches(0.15)
+
+# Save the presentation
+prs.save('table.pptx')
+
