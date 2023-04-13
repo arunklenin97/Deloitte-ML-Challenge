@@ -53,7 +53,6 @@ Deloitte Presents Machine Learning Challenge: Predict Loan Defaulters in associa
  * Stacking 
  
  
- 
  import pandas as pd
 from pptx import Presentation
 from pptx.util import Inches
@@ -83,11 +82,9 @@ table = slide.shapes.add_table(
 
 # Set the column widths based on the maximum text width for each column
 max_col_widths = [0] * df.shape[1]
-for i in range(df.shape[0]):
-    for j in range(df.shape[1]):
-        cell = table.cell(i+1, j)
-        text_width = cell.text_frame.paragraphs[0].runs[0].font.size * len(cell.text)
-        max_col_widths[j] = max(max_col_widths[j], text_width)
+for cell in table.iter_cells():
+    text_width = cell.text_frame.paragraphs[0].runs[0].font.size * len(cell.text)
+    max_col_widths[cell.col_idx] = max(max_col_widths[cell.col_idx], text_width)
 for idx, width in enumerate(max_col_widths):
     table.columns[idx].width = width
 
@@ -106,4 +103,3 @@ for i in range(df.shape[0]):
 
 # Save the presentation
 prs.save('table.pptx')
-
