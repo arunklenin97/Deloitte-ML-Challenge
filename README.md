@@ -51,14 +51,13 @@ Deloitte Presents Machine Learning Challenge: Predict Loan Defaulters in associa
  * Multiple models-hyperparameter tuning
  * Methods to maximize the metric of evaluation
  * Stacking 
- 
  from transformers import AutoTokenizer, AutoModel
 from sklearn.cluster import KMeans
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 
 # Step 1: Preprocess the text
-sentences = [
+sentences1 = [
     "The cat sat on the mat",
     "The dog sat on the rug",
     "The cat slept on the mat",
@@ -66,25 +65,49 @@ sentences = [
     "The cat and dog were friends",
     "The cat and dog were enemies"
 ]
+
+sentences2 = [
+    "The cat was hungry",
+    "The dog was thirsty",
+    "The cat was playing with a ball",
+    "The dog was chasing its tail",
+    "The cat and dog were napping",
+    "The cat and dog were fighting"
+]
+
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-tokenized_sentences = [tokenizer.tokenize(sent) for sent in sentences]
-cleaned_sentences = []
-for tokens in tokenized_sentences:
+tokenized_sentences1 = [tokenizer.tokenize(sent) for sent in sentences1]
+cleaned_sentences1 = []
+for tokens in tokenized_sentences1:
     cleaned_tokens = [token for token in tokens if token.isalpha()]
-    cleaned_sentences.append(" ".join(cleaned_tokens))
+    cleaned_sentences1.append(" ".join(cleaned_tokens))
+
+tokenized_sentences2 = [tokenizer.tokenize(sent) for sent in sentences2]
+cleaned_sentences2 = []
+for tokens in tokenized_sentences2:
+    cleaned_tokens = [token for token in tokens if token.isalpha()]
+    cleaned_sentences2.append(" ".join(cleaned_tokens))
 
 # Step 2: Embed the sentences
 model = AutoModel.from_pretrained("bert-base-uncased")
-embeddings = []
-for sent in cleaned_sentences:
+embeddings1 = []
+for sent in cleaned_sentences1:
     input_ids = tokenizer.encode(sent, add_special_tokens=True, return_tensors="pt")
     with torch.no_grad():
         output = model(input_ids)[0][:, 0, :].numpy()
-    embeddings.append(output)
-embeddings = np.vstack(embeddings)
+    embeddings1.append(output)
+embeddings1 = np.vstack(embeddings1)
+
+embeddings2 = []
+for sent in cleaned_sentences2:
+    input_ids = tokenizer.encode(sent, add_special_tokens=True, return_tensors="pt")
+    with torch.no_grad():
+        output = model(input_ids)[0][:, 0, :].numpy()
+    embeddings2.append(output)
+embeddings2 = np.vstack(embeddings2)
 
 # Step 3: Compute similarities
-similarity_matrix = cosine_similarity(embeddings)
+similarity_matrix = cosine_similarity(embeddings1, embeddings2)
 
 # Step 4: Cluster the sentences
 num_clusters = 2
@@ -92,11 +115,15 @@ kmeans = KMeans(n_clusters=num_clusters, random_state=0).fit(similarity_matrix)
 
 # Step 5: Evaluate the clusters
 cluster_labels = kmeans.labels_
-print(cluster_labels) # should output [0 0 0 0 1 1]
 
 # Step 6: Map the contexts
-context_sentences = [[] for _ in range(num_clusters)]
+context_sentences1 = [[] for _ in range(num_clusters)]
 for i, label in enumerate(cluster_labels):
-    context_sentences[label].append(sentences[i])
-print(context_sentences) # should output [['The cat sat on the mat', 'The dog sat on the rug', 'The cat slept on the mat', 'The dog slept on the rug'], ['The cat and dog were friends', 'The cat and dog were enemies']]
+    context_sentences1[label].append(sentences1[i])
 
+context_sentences2 = [[] for _ in range(num_clusters)]
+for i, label in enumerate(cluster_labels):
+    context_sentences2[label].append(sentences2[i])
+
+print(context_sentences1) # should output [['The cat sat on the mat', 'The dog sat on the rug', 'The cat slept on the mat', 'The dog slept on the rug'], ['The cat and dog were friends', 'The cat and dog were enemies']]
+print(context_sentences2) # should output [['The cat was hungry', 'The dog was thirsty', 'The cat was playing with a ball', 'The dog was chasing its tail'], ['The cat and dog were napping', 'The cat and dog were fighting']]
